@@ -31,8 +31,6 @@
 .PARAMETER OutputDirectory
     Default: .\dotnet-download
     Specifies a directory to download dotnet installers into.
-.PARAMETER Verbose
-    Displays diagnostics information.
 .PARAMETER AzureFeed
     Default: https://dotnetcli.azureedge.net/dotnet
     This parameter typically is not changed by the user.
@@ -55,7 +53,6 @@ param(
     [string[]]$InstallerTypes = @("sdk", "dotnet", "aspnetcore", "hostingbundle", "windowsdesktop"),
     [string[]]$Architectures = @("x64", "x86"),
     [string]$OutputDirectory = ".\dotnet-download",
-    [switch]$DryRun,
     [string]$AzureFeed = "https://dotnetcli.azureedge.net/dotnet",
     [string]$UncachedFeed = "https://dotnetcli.blob.core.windows.net/dotnet",
     [string]$ProxyAddress,
