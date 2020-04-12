@@ -172,33 +172,33 @@ function Get-DownloadInfo([string]$Feed, [string]$SpecificVersion, [string]$CLIA
 
     if ($InstallerType -eq "sdk") {
         $FileName = "dotnet-sdk-$SpecificVersion-win-$CLIArchitecture.exe"
-        $PayloadURL = "$Feed/Sdk/$SpecificVersion/$FileName"
+        $FileUri = "$Feed/Sdk/$SpecificVersion/$FileName"
     }
     elseif ($InstallerType -eq "dotnet") {
         $FileName = "dotnet-runtime-$SpecificVersion-win-$CLIArchitecture.exe"
-        $PayloadURL = "$Feed/Runtime/$SpecificVersion/$FileName"
+        $FileUri = "$Feed/Runtime/$SpecificVersion/$FileName"
     }
     elseif ($InstallerType -eq "aspnetcore") {
         $FileName = "aspnetcore-runtime-$SpecificVersion-win-$CLIArchitecture.exe"
-        $PayloadURL = "$Feed/aspnetcore/Runtime/$SpecificVersion/$FileName"
+        $FileUri = "$Feed/aspnetcore/Runtime/$SpecificVersion/$FileName"
     }
     elseif ($InstallerType -eq "hostingbundle") {
         $FileName = "dotnet-hosting-$SpecificVersion-win.exe"
-        $PayloadURL = "$Feed/aspnetcore/Runtime/$SpecificVersion/$FileName"
+        $FileUri = "$Feed/aspnetcore/Runtime/$SpecificVersion/$FileName"
     }
     elseif ($InstallerType -eq "windowsdesktop") {
         $FileName = "windowsdesktop-runtime-$SpecificVersion-win-$CLIArchitecture.exe"
-        $PayloadURL = "$Feed/Runtime/$SpecificVersion/$FileName"
+        $FileUri = "$Feed/Runtime/$SpecificVersion/$FileName"
     }
     else {
         throw "Invalid value for `$InstallerType"
     }
 
-    Say-Verbose "Constructed primary named payload URL: $PayloadURL"
+    Say-Verbose "Constructed primary named payload URL: $FileUri"
 
     return @{
         FileName = $FileName
-        FileUrl  = $PayloadURL
+        FileUri  = $FileUri
     }
 }
 
@@ -246,6 +246,19 @@ function Get-OutputDirectory([string]$Channel, [string]$InstallerType) {
     return $OutDir
 }
 
+function Invoke-FileDownload([string]$FileUri, [string]$OutFile) {
+    Say-Invocation $MyInvocation
+
+    Say("Downloading '$FileUri' to '$OutFile'")
+    try {
+        Invoke-WebRequestWithRetry -Uri $FileUri -OutFile $OutFile
+    }
+    catch {
+        Say "Error occurred during the operation of downloading '$FileUri' to '$OutFile': $_"
+        Say-Verbose "$_.ScriptStackTrace"
+    }
+}
+
 if ($Channels.Count -lt 1) {
     throw "At least one Channel should be selected."
 }
@@ -272,26 +285,12 @@ foreach ($Channel in $ChannelVersions) {
 
             foreach ($Arc in $Architectures) {
                 $DownloadInfo = Get-DownloadInfo -Feed $AzureFeed -SpecificVersion $Version -CLIArchitecture $Arc -InstallerType $Installer
-                $FileUrl = $DownloadInfo.FileUrl
-                if (-not $DownloadLinks.Contains($FileUrl)) {
-                    $DownloadLinks += $FileUrl
+                if ($DownloadLinks.Contains($DownloadInfo.FileUri)) { continue }
+                $DownloadLinks += $DownloadInfo.FileUri
 
-                    $OutDir = Get-OutputDirectory -Channel $Channel -InstallerType $Installer
-                    $OutFile = Join-Path -Path $OutDir -ChildPath $DownloadInfo.FileName
-                    if (Test-Path -Path $OutFile) {
-                        Say "'$OutFile' already exists - skipping..."
-                        continue
-                    }
-
-                    Say("Downloading '$FileUrl' to '$OutFile'")
-                    try {
-                        Invoke-WebRequestWithRetry -Uri $FileUrl -OutFile $OutFile
-                    }
-                    catch {
-                        Say "Error occurred during the operation of downloading '$FileUrl' to '$OutFile': $_"
-                        Say-Verbose "$_.ScriptStackTrace"
-                    }
-                }
+                $OutDir = Get-OutputDirectory -Channel $Channel -InstallerType $Installer
+                $OutFile = Join-Path -Path $OutDir -ChildPath $DownloadInfo.FileName
+                Invoke-FileDownload -FileUri $DownloadInfo.FileUri -OutFile $OutFile
             }
         }
         catch {
