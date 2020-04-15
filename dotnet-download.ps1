@@ -48,12 +48,15 @@
     This parameter typically is not changed by the user.
     It allows changing the URL for the Uncached feed used by this downloader script.
 .PARAMETER ProxyAddress
-    If set, this downloader script will use the proxy when making web requests
+    If set, this downloader script will use the proxy when making web requests.
 .PARAMETER ProxyUseDefaultCredentials
     Default: false
     Use default credentials, when using proxy address.
 .PARAMETER NoCdn
     Disable downloading from the Azure CDN, and use the uncached feed directly.
+.PARAMETER Verbose
+    Default: false
+    Show verbose output for script's actions.
 #>
 
 [cmdletbinding()]
@@ -133,7 +136,7 @@ function Say-Invocation($Invocation) {
     Say-Verbose "$command $args"
 }
 
-function Invoke-WithRetry([ScriptBlock]$ScriptBlock, [int]$MaxAttempts = 3, [int]$SecondsBetweenAttempts = 1) {
+function Invoke-WithRetry([ScriptBlock]$ScriptBlock, [int]$MaxAttempts = 3, [int]$MilliecondsBetweenAttempts = 300) {
     $Attempts = 0
 
     while ($true) {
@@ -143,7 +146,7 @@ function Invoke-WithRetry([ScriptBlock]$ScriptBlock, [int]$MaxAttempts = 3, [int
         catch {
             $Attempts++
             if ($Attempts -lt $MaxAttempts) {
-                Start-Sleep $SecondsBetweenAttempts
+                Start-Sleep -Milliseconds $MilliecondsBetweenAttempts
             }
             else {
                 throw
@@ -311,8 +314,8 @@ function Invoke-FileDownload([string]$FileUri, [string]$OutFile) {
         Invoke-WebRequestWithRetry -Uri $FileUri -OutFile $OutFile
     }
     catch {
-        Say "Error occurred during the operation of downloading '$FileUri' to '$OutFile': $_"
-        Say-Verbose "$_.ScriptStackTrace"
+        Say "Cannot download '$FileUri'"
+        Say-Verbose "$_`n$_.ScriptStackTrace"
     }
 }
 
@@ -337,8 +340,8 @@ foreach ($Channel in $ChannelVersions) {
             }
         }
         catch {
-            Say "Error occurred for Channel '$Channel' and DotnetType '$Type': $_"
-            Say-Verbose "$_.ScriptStackTrace"
+            Say "Error occurred for Channel '$Channel' and DotnetType '$Type'"
+            Say-Verbose "$_`n$_.ScriptStackTrace"
         }
     }
 }

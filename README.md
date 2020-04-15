@@ -32,7 +32,7 @@ The script creates SDK and Runtime directories inside the OutputDirectory and pl
 ```
 .\dotnet-download.ps1
 ```
-**Note:** In this case the script will show errors for binaries that cannot be downloaded (e.g. for `windowsdesktop-runtime-2.2.7-win-x64.exe` as there was no such thing as Windows Desktop Runtime for .NET Core 2.2), these errors can be ignored.
+**Note:** In this case the script will show errors for binaries that cannot be downloaded (e.g. for `windowsdesktop-runtime-2.2.7-win-x64.exe` as there was no such thing as Windows Desktop Runtime for .NET Core 2.2, or for `dotnet-sdk-3.1.201-linux-arm64.exe` as there's obviously no Windows installer for a Linux arm64), these errors can be ignored.
 
 **Example 2:** Download Windows x64 installers for 3.1 (LTS and Current channels correspond to 3.1 at the time of writing) and 2.2 SDKs and hosting bundles into C:\dotnet bypassing Azure CDN:
 ```
