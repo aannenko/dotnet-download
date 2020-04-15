@@ -4,20 +4,20 @@
 
 <#
 .SYNOPSIS
-    Downloads latest dotnet installers
+    Downloads latest dotnet binaries
 .DESCRIPTION
-    Downloads latest dotnet installers of the specified architectures from the specified channels.
+    Downloads latest dotnet binaries of the specified architectures from the specified channels.
     If dotnet files already exist in the given directory their download will be skipped.
 .PARAMETER Channels
-    Default: @("Current", "LTS", "3.1", "3.0", "2.2", "2.1")
+    Default: Current, LTS, 3.1, 3.0, 2.2, 2.1
     Array or Channels to download from. Possible values:
     - Current   - most current release
     - LTS       - most current supported release
     - 2-part version in a format A.B - represents a specific release
           examples: 3.1, 2.2
-.PARAMETER InstallerTypes
-    Default: @("sdk", "dotnet", "aspnetcore", "hostingbundle", "windowsdesktop")
-    Specifies a type of installer to download.
+.PARAMETER DotnetTypes
+    Default: sdk, dotnet, aspnetcore, hostingbundle, windowsdesktop
+    Array of dotnet binaries' types to download.
     Possible values:
         - sdk            - SDK
         - dotnet         - the Microsoft.NETCore.App shared runtime
@@ -25,17 +25,26 @@
         - hostingbundle  - the Hosting Bundle, which includes the .NET Core Runtime and IIS support
         - windowsdesktop - the Microsoft.WindowsDesktop.App shared runtime
 .PARAMETER Architectures
-    Default: @("x64", "x86") - this value represents all supported Windows architectures
-    Array or architectures of dotnet installers to be downloaded.
-    Possible values are: x64, x86
+    Default: win-x64, win-x86, win-arm, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64
+    Array or dotnet binaries' architectures to download.
+    Possible values are: win-x64, win-x86, win-arm, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64
+.PARAMETER FileExtensions
+    Default: exe, zip, tar.gz, pkg
+    Array of dotnet binaries' file extensions to download.
+    Possible values:
+        - exe       - Windows installer
+        - zip       - zip archive with dotnet binaries
+        - tar.gz    - tar.gz archive with dotnet binaries
+        - pkg       - OSX installer
 .PARAMETER OutputDirectory
     Default: .\dotnet-download
-    Specifies a directory to download dotnet installers into.
+    Specifies a directory to download dotnet binaries into.
 .PARAMETER AzureFeed
     Default: https://dotnetcli.azureedge.net/dotnet
     This parameter typically is not changed by the user.
-    It allows changing the URL for the Azure feed used by this downloader script.
+    It allows changing the URL for primary feed used by this downloader script.
 .PARAMETER UncachedFeed
+    Default: https://dotnetcli.blob.core.windows.net/dotnet
     This parameter typically is not changed by the user.
     It allows changing the URL for the Uncached feed used by this downloader script.
 .PARAMETER ProxyAddress
@@ -50,8 +59,9 @@
 [cmdletbinding()]
 param(
     [string[]]$Channels = @("Current", "LTS", "3.1", "3.0", "2.2", "2.1"),
-    [string[]]$InstallerTypes = @("sdk", "dotnet", "aspnetcore", "hostingbundle", "windowsdesktop"),
-    [string[]]$Architectures = @("x64", "x86"),
+    [string[]]$DotnetTypes = @("sdk", "dotnet", "aspnetcore", "hostingbundle", "windowsdesktop"),
+    [string[]]$Architectures = @("win-x64", "win-x86", "win-arm", "linux-x64", "linux-arm", "linux-arm64", "alpine-x64", "alpine-arm64", "rhel6-x64", "osx-x64"),
+    [string[]]$FileExtensions = @("exe", "zip", "tar.gz", "pkg"),
     [string]$OutputDirectory = ".\dotnet-download",
     [string]$AzureFeed = "https://dotnetcli.azureedge.net/dotnet",
     [string]$UncachedFeed = "https://dotnetcli.blob.core.windows.net/dotnet",
@@ -63,6 +73,51 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
+
+if ($Channels.Count -lt 1) {
+    throw "At least one Channel should be selected."
+}
+
+if ($DotnetTypes.Count -lt 1) {
+    throw "At least one DotnetType should be selected."
+}
+
+if ($Architectures.Count -lt 1) {
+    throw "At least one Architecture should be selected."
+}
+
+if ($NoCdn) {
+    $AzureFeed = $UncachedFeed
+}
+
+$DotnetTypeToLink = @{
+    "sdk" = "$AzureFeed/Sdk"
+    "dotnet" = "$AzureFeed/Runtime"
+    "aspnetcore" = "$AzureFeed/aspnetcore/Runtime"
+    "hostingbundle" = "$AzureFeed/aspnetcore/Runtime"
+    "windowsdesktop" = "$AzureFeed/Runtime"
+}
+
+$DotnetTypeToFileName = @{
+    "sdk" = "dotnet-sdk"
+    "dotnet" = "dotnet-runtime"
+    "aspnetcore" = "aspnetcore-runtime"
+    "hostingbundle" = "dotnet-hosting"
+    "windowsdesktop" = "windowsdesktop-runtime"
+}
+
+$ArchitectureToFileName = @{
+    "win-x86" = "win-x86"
+    "win-x64" = "win-x64"
+    "win-arm" = "win-arm"
+    "linux-x64" = "linux-x64"
+    "linux-arm" = "linux-arm"
+    "linux-arm64" = "linux-arm64"
+    "alpine-x64" = "linux-musl-x64"
+    "alpine-arm64" = "linux-musl-arm64"
+    "rhel6-x64" = "rhel.6-x64"
+    "osx-x64" = "osx-x64"
+}
 
 function Say($str) {
     Write-Host "dotnet-download: $str"
@@ -135,19 +190,19 @@ function Invoke-WebRequestWithRetry([Uri] $Uri, [string] $OutFile) {
         })
 }
 
-function Get-LatestVersion([string]$Feed, [string]$Channel, [string]$InstallerType) {
+function Get-LatestVersion([string]$Feed, [string]$Channel, [string]$DotnetType) {
     Say-Invocation $MyInvocation
 
     $VersionFileUrl = $null
-    if ($InstallerType -eq "sdk") {
+    if ($DotnetType -eq "sdk") {
         $VersionFileUrl = "$UncachedFeed/Sdk/$Channel/latest.version"
     }
-    elseif ($InstallerType -eq "dotnet" -or $InstallerType -eq "aspnetcore" -or $InstallerType -eq "hostingbundle" -or $InstallerType -eq "windowsdesktop") {
+    elseif (@("dotnet", "aspnetcore", "hostingbundle", "windowsdesktop") -contains $DotnetType) {
         $VersionFileUrl = "$UncachedFeed/Runtime/$Channel/latest.version"
         # There's also this path for aspnetcore and hostingbundle: "$UncachedFeed/aspnetcore/Runtime/$Channel/latest.version"
     }
     else {
-        throw "Invalid value for `$InstallerType"
+        throw "Invalid value for `$DotnetType"
     }
 
     try {
@@ -167,38 +222,35 @@ function Get-LatestVersion([string]$Feed, [string]$Channel, [string]$InstallerTy
     return (-split $VersionText)[-1]
 }
 
-function Get-DownloadInfo([string]$Feed, [string]$SpecificVersion, [string]$CLIArchitecture, [string]$InstallerType) {
+function Get-DownloadInfo([string]$Feed, [string]$SpecificVersion, [string]$CLIArchitecture, [string]$DotnetType, [string]$FileExtension) {
     Say-Invocation $MyInvocation
 
-    if ($InstallerType -eq "sdk") {
-        $FileName = "dotnet-sdk-$SpecificVersion-win-$CLIArchitecture.exe"
-        $FileUri = "$Feed/Sdk/$SpecificVersion/$FileName"
+    if ($DotnetTypeToLink.PSBase.Keys -notcontains $DotnetType) {
+        throw "Invalid value for `$DotnetType"
     }
-    elseif ($InstallerType -eq "dotnet") {
-        $FileName = "dotnet-runtime-$SpecificVersion-win-$CLIArchitecture.exe"
-        $FileUri = "$Feed/Runtime/$SpecificVersion/$FileName"
+
+    if ($ArchitectureToFileName.PSBase.Keys -notcontains $CLIArchitecture) {
+        throw "Invalid value for `$CLIArchitecture"
     }
-    elseif ($InstallerType -eq "aspnetcore") {
-        $FileName = "aspnetcore-runtime-$SpecificVersion-win-$CLIArchitecture.exe"
-        $FileUri = "$Feed/aspnetcore/Runtime/$SpecificVersion/$FileName"
-    }
-    elseif ($InstallerType -eq "hostingbundle") {
-        $FileName = "dotnet-hosting-$SpecificVersion-win.exe"
-        $FileUri = "$Feed/aspnetcore/Runtime/$SpecificVersion/$FileName"
-    }
-    elseif ($InstallerType -eq "windowsdesktop") {
-        $FileName = "windowsdesktop-runtime-$SpecificVersion-win-$CLIArchitecture.exe"
-        $FileUri = "$Feed/Runtime/$SpecificVersion/$FileName"
+
+    $FileNameFirstPart = $DotnetTypeToFileName[$DotnetType]
+    $FileNameSecondPart = $ArchitectureToFileName[$CLIArchitecture]
+
+    $FileName = if ($DotnetType -eq "hostingbundle") {
+        "$FileNameFirstPart-$SpecificVersion-win.exe"
     }
     else {
-        throw "Invalid value for `$InstallerType"
+        "$FileNameFirstPart-$SpecificVersion-$FileNameSecondPart.$FileExtension"
     }
+
+    $LinkFirstPart = $DotnetTypeToLink[$DotnetType]
+    $FileUri = "$LinkFirstPart/$SpecificVersion/$FileName"
 
     Say-Verbose "Constructed primary named payload URL: $FileUri"
 
     return @{
         FileName = $FileName
-        FileUri  = $FileUri
+        FileUri = $FileUri
     }
 }
 
@@ -209,7 +261,7 @@ function Get-ChannelVersion([string]$Feed, [string]$Channel) {
         return $Channel
     }
 
-    $Version = Get-LatestVersion -Feed $Feed -Channel $Channel -InstallerType $InstallerTypes[0]
+    $Version = Get-LatestVersion -Feed $Feed -Channel $Channel -DotnetType $DotnetTypes[0]
     if ($Version -match "(\d\.\d{1,2})") {
         return $Matches[0]
     }
@@ -231,15 +283,15 @@ function Get-SelectedChannelVersions([string]$Feed) {
     return $ChannelVersions
 }
 
-function Get-OutputDirectory([string]$Channel, [string]$InstallerType) {
+function Get-OutputDirectory([string]$Channel, [string]$DotnetType) {
     Say-Invocation $MyInvocation
 
     $ChannelDir = Join-Path -Path $OutputDirectory -ChildPath $Channel
-    if ($InstallerType.ToLower() -eq "sdk") {
-        $OutDir = Join-Path -Path $ChannelDir -ChildPath "SDK"
+    $OutDir = if ($DotnetType.ToLower() -eq "sdk") {
+        Join-Path -Path $ChannelDir -ChildPath "SDK"
     }
     else {
-        $OutDir = Join-Path -Path $ChannelDir -ChildPath "Runtime"
+        Join-Path -Path $ChannelDir -ChildPath "Runtime"
     }
 
     New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
@@ -248,6 +300,11 @@ function Get-OutputDirectory([string]$Channel, [string]$InstallerType) {
 
 function Invoke-FileDownload([string]$FileUri, [string]$OutFile) {
     Say-Invocation $MyInvocation
+
+    if (Test-Path -Path $OutFile) {
+        Say "'$OutFile' already exists - skipping..."
+        return
+    }
 
     Say("Downloading '$FileUri' to '$OutFile'")
     try {
@@ -259,42 +316,28 @@ function Invoke-FileDownload([string]$FileUri, [string]$OutFile) {
     }
 }
 
-if ($Channels.Count -lt 1) {
-    throw "At least one Channel should be selected."
-}
-
-if ($InstallerTypes.Count -lt 1) {
-    throw "At least one InstallerType should be selected."
-}
-
-if ($Architectures.Count -lt 1) {
-    throw "At least one Architecture should be selected."
-}
-
-if ($NoCdn) {
-    $AzureFeed = $UncachedFeed
-}
-
 $ChannelVersions = Get-SelectedChannelVersions -Feed $AzureFeed
 $DownloadLinks = @()
 
 foreach ($Channel in $ChannelVersions) {
-    foreach ($Installer in $InstallerTypes) {
+    foreach ($Type in $DotnetTypes) {
         try {
-            $Version = Get-LatestVersion -Feed $AzureFeed -Channel $Channel -InstallerType $Installer
+            $Version = Get-LatestVersion -Feed $AzureFeed -Channel $Channel -DotnetType $Type
 
             foreach ($Arc in $Architectures) {
-                $DownloadInfo = Get-DownloadInfo -Feed $AzureFeed -SpecificVersion $Version -CLIArchitecture $Arc -InstallerType $Installer
-                if ($DownloadLinks.Contains($DownloadInfo.FileUri)) { continue }
-                $DownloadLinks += $DownloadInfo.FileUri
+                foreach ($Ext in $FileExtensions) {
+                    $DownloadInfo = Get-DownloadInfo -Feed $AzureFeed -SpecificVersion $Version -CLIArchitecture $Arc -DotnetType $Type -FileExtension $Ext
+                    if ($DownloadLinks -contains $DownloadInfo.FileUri) { continue }
+                    $DownloadLinks += $DownloadInfo.FileUri
 
-                $OutDir = Get-OutputDirectory -Channel $Channel -InstallerType $Installer
-                $OutFile = Join-Path -Path $OutDir -ChildPath $DownloadInfo.FileName
-                Invoke-FileDownload -FileUri $DownloadInfo.FileUri -OutFile $OutFile
+                    $OutDir = Get-OutputDirectory -Channel $Channel -DotnetType $Type
+                    $OutFile = Join-Path -Path $OutDir -ChildPath $DownloadInfo.FileName
+                    Invoke-FileDownload -FileUri $DownloadInfo.FileUri -OutFile $OutFile
+                }
             }
         }
         catch {
-            Say "Error occurred for Channel '$Channel' and InstallerType '$Installer': $_"
+            Say "Error occurred for Channel '$Channel' and DotnetType '$Type': $_"
             Say-Verbose "$_.ScriptStackTrace"
         }
     }
