@@ -197,10 +197,10 @@ function Get-LatestVersion([string]$Feed, [string]$Channel, [string]$DotnetType)
     Say-Invocation $MyInvocation
 
     $VersionFileUrl = if ($DotnetType -eq "sdk") {
-        "$UncachedFeed/Sdk/$Channel/latest.version"
+        "$Feed/Sdk/$Channel/latest.version"
     }
     elseif (@("dotnet", "aspnetcore", "hostingbundle", "windowsdesktop") -contains $DotnetType) {
-        "$UncachedFeed/Runtime/$Channel/latest.version"
+        "$Feed/Runtime/$Channel/latest.version"
         # There's also this path for aspnetcore and hostingbundle:
         # "$UncachedFeed/aspnetcore/Runtime/$Channel/latest.version"
     }
@@ -320,19 +320,13 @@ function Invoke-FileDownload([string]$FileUri, [string]$OutFile) {
 }
 
 $ChannelVersions = Get-SelectedChannelVersions -Feed $AzureFeed
-$DownloadLinks = @()
-
 foreach ($Channel in $ChannelVersions) {
     foreach ($Type in $DotnetTypes) {
         try {
             $Version = Get-LatestVersion -Feed $AzureFeed -Channel $Channel -DotnetType $Type
-
             foreach ($Arc in $Architectures) {
                 foreach ($Ext in $FileExtensions) {
                     $DownloadInfo = Get-DownloadInfo -Feed $AzureFeed -SpecificVersion $Version -CLIArchitecture $Arc -DotnetType $Type -FileExtension $Ext
-                    if ($DownloadLinks -contains $DownloadInfo.FileUri) { continue }
-                    $DownloadLinks += $DownloadInfo.FileUri
-
                     $OutDir = Get-OutputDirectory -Channel $Channel -DotnetType $Type
                     $OutFile = Join-Path -Path $OutDir -ChildPath $DownloadInfo.FileName
                     Invoke-FileDownload -FileUri $DownloadInfo.FileUri -OutFile $OutFile
