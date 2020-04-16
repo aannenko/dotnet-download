@@ -93,6 +93,8 @@ if ($NoCdn) {
     $AzureFeed = $UncachedFeed
 }
 
+$IsDefaultProxyTested = $false
+
 $DotnetTypeToLink = @{
     "sdk"            = "$AzureFeed/Sdk"
     "dotnet"         = "$AzureFeed/Runtime"
@@ -155,7 +157,7 @@ function Invoke-WithRetry([ScriptBlock]$ScriptBlock, [int]$MaxAttempts = 3, [int
     }
 }
 
-function Test-DefaultProxy {
+function Test-DefaultProxy([Uri]$Uri) {
     Say-Invocation $MyInvocation
 
     if (-not $ProxyAddress) {
@@ -182,6 +184,11 @@ function Invoke-WebRequestWithRetry([Uri]$Uri, [string]$OutFile) {
     Invoke-WithRetry(
         {
             $RequestExpression = "Invoke-WebRequest -Uri ${Uri} -TimeoutSec 1200 -UseBasicParsing"
+
+            if (-not $ProxyAddress -and -not $IsDefaultProxyTested) {
+                Test-DefaultProxy
+                $IsDefaultProxyTested = $true
+            }
 
             if ($ProxyAddress) {
                 $RequestExpression += " -Proxy ${ProxyAddress}"
@@ -323,8 +330,6 @@ function Invoke-FileDownload([string]$FileUri, [string]$OutFile) {
         Say-Verbose "$_`n$_.ScriptStackTrace"
     }
 }
-
-Test-DefaultProxy
 
 $ChannelVersions = Get-SelectedChannelVersions
 foreach ($Channel in $ChannelVersions) {
