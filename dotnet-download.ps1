@@ -186,7 +186,7 @@ function Invoke-WebRequestWithRetry([Uri]$Uri, [string]$OutFile) {
             $RequestExpression = "Invoke-WebRequest -Uri ${Uri} -TimeoutSec 1200 -UseBasicParsing"
 
             if (-not $ProxyAddress -and -not $IsDefaultProxyTested) {
-                Test-DefaultProxy
+                Test-DefaultProxy -Uri $Uri
                 $IsDefaultProxyTested = $true
             }
 
