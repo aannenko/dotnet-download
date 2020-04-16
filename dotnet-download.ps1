@@ -176,7 +176,7 @@ function Check-DefaultProxy() {
     }
 }
 
-function Invoke-WebRequestWithRetry([Uri] $Uri, [string] $OutFile) {
+function Invoke-WebRequestWithRetry([Uri]$Uri, [string]$OutFile) {
     Say-Invocation $MyInvocation
 
     Invoke-WithRetry(
@@ -198,16 +198,16 @@ function Invoke-WebRequestWithRetry([Uri] $Uri, [string] $OutFile) {
         })
 }
 
-function Get-LatestVersion([string]$Feed, [string]$Channel, [string]$DotnetType) {
+function Get-LatestVersion([string]$Channel, [string]$DotnetType) {
     Say-Invocation $MyInvocation
 
     $VersionFileUrl = if ($DotnetType -eq "sdk") {
-        "$Feed/Sdk/$Channel/latest.version"
+        "$AzureFeed/Sdk/$Channel/latest.version"
     }
     elseif (@("dotnet", "aspnetcore", "hostingbundle", "windowsdesktop") -contains $DotnetType) {
-        "$Feed/Runtime/$Channel/latest.version"
+        "$AzureFeed/Runtime/$Channel/latest.version"
         # There's also this path for aspnetcore and hostingbundle:
-        # "$UncachedFeed/aspnetcore/Runtime/$Channel/latest.version"
+        # "$AzureFeed/aspnetcore/Runtime/$Channel/latest.version"
     }
     else {
         throw "Invalid value for `$DotnetType"
@@ -230,7 +230,7 @@ function Get-LatestVersion([string]$Feed, [string]$Channel, [string]$DotnetType)
     return (-split $VersionText)[-1]
 }
 
-function Get-DownloadInfo([string]$Feed, [string]$SpecificVersion, [string]$CLIArchitecture, [string]$DotnetType, [string]$FileExtension) {
+function Get-DownloadInfo([string]$SpecificVersion, [string]$CLIArchitecture, [string]$DotnetType, [string]$FileExtension) {
     Say-Invocation $MyInvocation
 
     if ($DotnetTypeToLink.PSBase.Keys -notcontains $DotnetType) {
@@ -262,14 +262,14 @@ function Get-DownloadInfo([string]$Feed, [string]$SpecificVersion, [string]$CLIA
     }
 }
 
-function Get-ChannelVersion([string]$Feed, [string]$Channel) {
+function Get-ChannelVersion([string]$Channel) {
     Say-Invocation $MyInvocation
 
     if ($Channel -match "\d\.\d{1,2}") {
         return $Channel
     }
 
-    $Version = Get-LatestVersion -Feed $Feed -Channel $Channel -DotnetType $DotnetTypes[0]
+    $Version = Get-LatestVersion -Channel $Channel -DotnetType $DotnetTypes[0]
     if ($Version -match "(\d\.\d{1,2})") {
         return $Matches[0]
     }
@@ -277,12 +277,12 @@ function Get-ChannelVersion([string]$Feed, [string]$Channel) {
     throw "Could not retrieve Channel version"
 }
 
-function Get-SelectedChannelVersions([string]$Feed) {
+function Get-SelectedChannelVersions {
     Say-Invocation $MyInvocation
 
     $ChannelVersions = @()
     foreach ($Ch in $Channels) {
-        $Version = Get-ChannelVersion -Feed $Feed -Channel $Ch
+        $Version = Get-ChannelVersion -Channel $Ch
         if (-not $ChannelVersions.Contains($Version)) {
             $ChannelVersions += $Version
         }
@@ -325,14 +325,15 @@ function Invoke-FileDownload([string]$FileUri, [string]$OutFile) {
 }
 
 Check-DefaultProxy
-$ChannelVersions = Get-SelectedChannelVersions -Feed $AzureFeed
+
+$ChannelVersions = Get-SelectedChannelVersions
 foreach ($Channel in $ChannelVersions) {
     foreach ($Type in $DotnetTypes) {
         try {
-            $Version = Get-LatestVersion -Feed $AzureFeed -Channel $Channel -DotnetType $Type
+            $Version = Get-LatestVersion -Channel $Channel -DotnetType $Type
             foreach ($Arc in $Architectures) {
                 foreach ($Ext in $FileExtensions) {
-                    $DownloadInfo = Get-DownloadInfo -Feed $AzureFeed -SpecificVersion $Version -CLIArchitecture $Arc -DotnetType $Type -FileExtension $Ext
+                    $DownloadInfo = Get-DownloadInfo -SpecificVersion $Version -CLIArchitecture $Arc -DotnetType $Type -FileExtension $Ext
                     $OutDir = Get-OutputDirectory -Channel $Channel -DotnetType $Type
                     $OutFile = Join-Path -Path $OutDir -ChildPath $DownloadInfo.FileName
                     Invoke-FileDownload -FileUri $DownloadInfo.FileUri -OutFile $OutFile
