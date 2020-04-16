@@ -196,13 +196,13 @@ function Invoke-WebRequestWithRetry([Uri] $Uri, [string] $OutFile) {
 function Get-LatestVersion([string]$Feed, [string]$Channel, [string]$DotnetType) {
     Say-Invocation $MyInvocation
 
-    $VersionFileUrl = $null
-    if ($DotnetType -eq "sdk") {
-        $VersionFileUrl = "$UncachedFeed/Sdk/$Channel/latest.version"
+    $VersionFileUrl = if ($DotnetType -eq "sdk") {
+        "$UncachedFeed/Sdk/$Channel/latest.version"
     }
     elseif (@("dotnet", "aspnetcore", "hostingbundle", "windowsdesktop") -contains $DotnetType) {
-        $VersionFileUrl = "$UncachedFeed/Runtime/$Channel/latest.version"
-        # There's also this path for aspnetcore and hostingbundle: "$UncachedFeed/aspnetcore/Runtime/$Channel/latest.version"
+        "$UncachedFeed/Runtime/$Channel/latest.version"
+        # There's also this path for aspnetcore and hostingbundle:
+        # "$UncachedFeed/aspnetcore/Runtime/$Channel/latest.version"
     }
     else {
         throw "Invalid value for `$DotnetType"
