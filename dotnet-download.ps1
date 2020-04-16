@@ -157,27 +157,6 @@ function Invoke-WithRetry([ScriptBlock]$ScriptBlock, [int]$MaxAttempts = 3, [int
     }
 }
 
-function Test-DefaultProxy([Uri]$Uri) {
-    Say-Invocation $MyInvocation
-
-    if (-not $ProxyAddress) {
-        try {
-            # Despite no proxy being explicitly specified, we may still be behind a default proxy
-            $DefaultProxy = [System.Net.WebRequest]::DefaultWebProxy;
-            if ($DefaultProxy -and (-not $DefaultProxy.IsBypassed($Uri))) {
-                $ProxyAddress = $DefaultProxy.GetProxy($Uri).OriginalString
-                $ProxyUseDefaultCredentials = $true
-            }
-        }
-        catch {
-            # Eat the exception and move forward as the above code is an attempt
-            #    at resolving the DefaultProxy that may not have been a problem.
-            $ProxyAddress = $null
-            Say-Verbose("Exception ignored: $_.Exception.Message - moving forward...")
-        }
-    }
-}
-
 function Invoke-WebRequestWithRetry([Uri]$Uri, [string]$OutFile) {
     Say-Invocation $MyInvocation
 
@@ -185,15 +164,25 @@ function Invoke-WebRequestWithRetry([Uri]$Uri, [string]$OutFile) {
         {
             $RequestExpression = "Invoke-WebRequest -Uri ${Uri} -TimeoutSec 1200 -UseBasicParsing"
 
-            if (-not $ProxyAddress -and -not $IsDefaultProxyTested) {
-                Test-DefaultProxy -Uri $Uri
-                $IsDefaultProxyTested = $true
-            }
-
             if ($ProxyAddress) {
                 $RequestExpression += " -Proxy ${ProxyAddress}"
                 if ($ProxyUseDefaultCredentials) {
                     $RequestExpression += " -ProxyUseDefaultCredentials"
+                }
+            }
+            else {
+                try {
+                    # Despite no proxy being explicitly specified, we may still be behind a default proxy
+                    $DefaultProxy = [System.Net.WebRequest]::DefaultWebProxy;
+                    if ($DefaultProxy -and (-not $DefaultProxy.IsBypassed($Uri))) {
+                        $ProxyAddress = $DefaultProxy.GetProxy($Uri).OriginalString
+                        $RequestExpression += " -Proxy ${ProxyAddress} -ProxyUseDefaultCredentials"
+                    }
+                }
+                catch {
+                    # Eat the exception and move forward as the above code is an attempt
+                    #    at resolving the DefaultProxy that may not have been a problem.
+                    Say-Verbose("Exception ignored: $_.Exception.Message - moving forward...")
                 }
             }
 
