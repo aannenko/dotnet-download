@@ -93,8 +93,6 @@ if ($NoCdn) {
     $AzureFeed = $UncachedFeed
 }
 
-$IsDefaultProxyTested = $false
-
 $DotnetTypeToLink = @{
     "sdk"            = "$AzureFeed/Sdk"
     "dotnet"         = "$AzureFeed/Runtime"
