@@ -155,7 +155,7 @@ function Invoke-WithRetry([ScriptBlock]$ScriptBlock, [int]$MaxAttempts = 3, [int
     }
 }
 
-function Check-DefaultProxy() {
+function Test-DefaultProxy {
     Say-Invocation $MyInvocation
 
     if (-not $ProxyAddress) {
@@ -324,7 +324,7 @@ function Invoke-FileDownload([string]$FileUri, [string]$OutFile) {
     }
 }
 
-Check-DefaultProxy
+Test-DefaultProxy
 
 $ChannelVersions = Get-SelectedChannelVersions
 foreach ($Channel in $ChannelVersions) {
