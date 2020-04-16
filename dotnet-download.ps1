@@ -94,32 +94,32 @@ if ($NoCdn) {
 }
 
 $DotnetTypeToLink = @{
-    "sdk" = "$AzureFeed/Sdk"
-    "dotnet" = "$AzureFeed/Runtime"
-    "aspnetcore" = "$AzureFeed/aspnetcore/Runtime"
-    "hostingbundle" = "$AzureFeed/aspnetcore/Runtime"
+    "sdk"            = "$AzureFeed/Sdk"
+    "dotnet"         = "$AzureFeed/Runtime"
+    "aspnetcore"     = "$AzureFeed/aspnetcore/Runtime"
+    "hostingbundle"  = "$AzureFeed/aspnetcore/Runtime"
     "windowsdesktop" = "$AzureFeed/Runtime"
 }
 
 $DotnetTypeToFileName = @{
-    "sdk" = "dotnet-sdk"
-    "dotnet" = "dotnet-runtime"
-    "aspnetcore" = "aspnetcore-runtime"
-    "hostingbundle" = "dotnet-hosting"
+    "sdk"            = "dotnet-sdk"
+    "dotnet"         = "dotnet-runtime"
+    "aspnetcore"     = "aspnetcore-runtime"
+    "hostingbundle"  = "dotnet-hosting"
     "windowsdesktop" = "windowsdesktop-runtime"
 }
 
 $ArchitectureToFileName = @{
-    "win-x86" = "win-x86"
-    "win-x64" = "win-x64"
-    "win-arm" = "win-arm"
-    "linux-x64" = "linux-x64"
-    "linux-arm" = "linux-arm"
-    "linux-arm64" = "linux-arm64"
-    "alpine-x64" = "linux-musl-x64"
+    "win-x86"      = "win-x86"
+    "win-x64"      = "win-x64"
+    "win-arm"      = "win-arm"
+    "linux-x64"    = "linux-x64"
+    "linux-arm"    = "linux-arm"
+    "linux-arm64"  = "linux-arm64"
+    "alpine-x64"   = "linux-musl-x64"
     "alpine-arm64" = "linux-musl-arm64"
-    "rhel6-x64" = "rhel.6-x64"
-    "osx-x64" = "osx-x64"
+    "rhel6-x64"    = "rhel.6-x64"
+    "osx-x64"      = "osx-x64"
 }
 
 function Say($str) {
@@ -258,7 +258,7 @@ function Get-DownloadInfo([string]$Feed, [string]$SpecificVersion, [string]$CLIA
 
     return @{
         FileName = $FileName
-        FileUri = $FileUri
+        FileUri  = $FileUri
     }
 }
 
