@@ -1,5 +1,5 @@
 # dotnet-download
-PowerShell script that automates downloading of the .NET binaries.
+PowerShell script that downloads latest .NET binaries.
 
 ### Details
 Major part of the script's code is taken from the .NET Foundation's [dotnet-install.ps1](https://dotnet.microsoft.com/download/dotnet-core/scripts)
