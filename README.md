@@ -5,7 +5,7 @@ PowerShell script that downloads latest .NET binaries.
 Major part of the script's code is taken from the .NET Foundation's [dotnet-install.ps1](https://dotnet.microsoft.com/download/dotnet-core/scripts)
 
 The script allows to configure:
-- Channels: .NET distribution channels
+- Channels: .NET channels
     - Available values: Current, LTS, 2-part version in format A.B
     - Default value: `Current, LTS, 3.1, 3.0, 2.2, 2.1`
 - DotnetTypes: types of .NET binaries
