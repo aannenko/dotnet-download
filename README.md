@@ -6,16 +6,16 @@ Major part of the script's code is taken from the .NET Foundation's [dotnet-inst
 
 The script allows to configure:
 - Channels: .NET channels
-    - Available values: Current, LTS, 2-part version in format A.B
+    - Available values: `Current`, `LTS`, 2-part version in format A.B
     - Default value: `Current, LTS, 3.1, 3.0, 2.2, 2.1`
 - DotnetTypes: types of .NET binaries
-    - Available values: sdk, dotnet, aspnetcore, hostingbundle, windowsdesktop
+    - Available values: `sdk`, `dotnet`, `aspnetcore`, `hostingbundle`, `windowsdesktop`
     - Default value: `sdk, dotnet, aspnetcore, hostingbundle, windowsdesktop`
 - Architectures: OS architectures
-    - Available values: win-x64, win-x86, win-arm, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64
+    - Available values: `win-x64`, `win-x86`, `win-arm`, `linux-x64`, `linux-arm`, `linux-arm64`, `alpine-x64`, `alpine-arm64`, `rhel6-x64`, `osx-x64`
     - Default value: `win-x64, win-x86, win-arm, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64`
 - FileExtensions: types of files to download
-    - Available values: exe, zip, tar.gz, pkg
+    - Available values: `exe`, `zip`, `tar.gz`, `pkg`
     - Default value: `exe, zip, tar.gz, pkg`
 - OutputDirectory: binaries are downloaded into this directory
     - Default value: .\dotnet-download
