@@ -25,9 +25,9 @@
         - hostingbundle  - the Hosting Bundle, which includes the .NET Core Runtime and IIS support
         - windowsdesktop - the Microsoft.WindowsDesktop.App shared runtime
 .PARAMETER Architectures
-    Default: win-x64, win-x86, win-arm, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64
+    Default: win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64
     Array or dotnet binaries' architectures to download.
-    Possible values are: win-x64, win-x86, win-arm, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64
+    Possible values are: win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64
 .PARAMETER FileExtensions
     Default: exe, zip, tar.gz, pkg
     Array of dotnet binaries' file extensions to download.
@@ -63,7 +63,7 @@
 param(
     [string[]]$Channels = @("Current", "LTS", "3.1", "3.0", "2.2", "2.1"),
     [string[]]$DotnetTypes = @("sdk", "dotnet", "aspnetcore", "hostingbundle", "windowsdesktop"),
-    [string[]]$Architectures = @("win-x64", "win-x86", "win-arm", "linux-x64", "linux-arm", "linux-arm64", "alpine-x64", "alpine-arm64", "rhel6-x64", "osx-x64"),
+    [string[]]$Architectures = @("win-x64", "win-x86", "win-arm", "win-arm64", "linux-x64", "linux-arm", "linux-arm64", "alpine-x64", "alpine-arm64", "rhel6-x64", "osx-x64"),
     [string[]]$FileExtensions = @("exe", "zip", "tar.gz", "pkg"),
     [string]$OutputDirectory = ".\dotnet-download",
     [string]$AzureFeed = "https://dotnetcli.azureedge.net/dotnet",
@@ -113,6 +113,7 @@ $ArchitectureToFileName = @{
     "win-x86"      = "win-x86"
     "win-x64"      = "win-x64"
     "win-arm"      = "win-arm"
+    "win-arm64"    = "win-arm64"
     "linux-x64"    = "linux-x64"
     "linux-arm"    = "linux-arm"
     "linux-arm64"  = "linux-arm64"
