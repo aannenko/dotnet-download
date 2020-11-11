@@ -9,7 +9,7 @@
     Downloads latest dotnet binaries of the specified architectures from the specified channels.
     If dotnet files already exist in the given directory their download will be skipped.
 .PARAMETER Channels
-    Default: Current, LTS, 3.1, 3.0, 2.2, 2.1
+    Default: Current, LTS, 3.1, 2.1
     Array or Channels to download from. Possible values:
     - Current   - most current release
     - LTS       - most current supported release
@@ -61,7 +61,7 @@
 
 [cmdletbinding()]
 param(
-    [string[]]$Channels = @("Current", "LTS", "3.1", "3.0", "2.2", "2.1"),
+    [string[]]$Channels = @("Current", "LTS", "3.1", "2.1"),
     [string[]]$DotnetTypes = @("sdk", "dotnet", "aspnetcore", "hostingbundle", "windowsdesktop"),
     [string[]]$Architectures = @("win-x64", "win-x86", "win-arm", "win-arm64", "linux-x64", "linux-arm", "linux-arm64", "alpine-x64", "alpine-arm64", "rhel6-x64", "osx-x64"),
     [string[]]$FileExtensions = @("exe", "zip", "tar.gz", "pkg"),
