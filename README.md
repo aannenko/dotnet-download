@@ -8,7 +8,7 @@ PowerShell script that downloads latest .NET binaries.
 ```
 **Note:** In this case the script will show errors for binaries that cannot be downloaded (e.g. for `dotnet-sdk-3.1.201-linux-arm64.exe` as there's obviously no Windows installer for a Linux arm64), these errors can be ignored.
 
-**Example 2:** Download Windows x64 installers for 3.1 (LTS and Current channels correspond to 3.1 at the time of writing) and 2.2 SDKs and hosting bundles into C:\dotnet bypassing Azure CDN:
+**Example 2:** Download Windows x64 installers for 5.0 (Current at the time of writing), 3.1 (LTS at the time of writing) and 2.2 SDKs and hosting bundles into C:\dotnet bypassing Azure CDN:
 ```
 .\dotnet-download.ps1 -Channels LTS, Current, 2.2 -DotnetTypes sdk, hostingbundle -Architectures win-x64 -FileExtensions exe -OutputDirectory C:\dotnet -NoCdn
 ```
@@ -16,7 +16,7 @@ PowerShell script that downloads latest .NET binaries.
 #### Parameters
 See the script header for detailed information on its parameters.
 
-### Details
+### Remarks
 Major part of the script's code is taken from the .NET Foundation's [dotnet-install.ps1](https://dotnet.microsoft.com/download/dotnet-core/scripts)
 
 The script creates SDK and Runtime directories inside the OutputDirectory and places binaries in them according to their type.

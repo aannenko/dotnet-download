@@ -12,9 +12,9 @@
     Default: Current, LTS, 3.1, 2.1
     Array or Channels to download from. Possible values:
     - Current   - most current release
-    - LTS       - most current supported release
+    - LTS       - most current Long Term Service release
     - 2-part version in a format A.B - represents a specific release
-          examples: 3.1, 2.2
+          examples: 3.1, 5.0
 .PARAMETER DotnetTypes
     Default: sdk, dotnet, aspnetcore, hostingbundle, windowsdesktop
     Array of dotnet binaries' types to download.
@@ -61,16 +61,37 @@
 
 [cmdletbinding()]
 param(
-    [string[]]$Channels = @("Current", "LTS", "3.1", "2.1"),
-    [string[]]$DotnetTypes = @("sdk", "dotnet", "aspnetcore", "hostingbundle", "windowsdesktop"),
-    [string[]]$Architectures = @("win-x64", "win-x86", "win-arm", "win-arm64", "linux-x64", "linux-arm", "linux-arm64", "alpine-x64", "alpine-arm64", "rhel6-x64", "osx-x64"),
-    [string[]]$FileExtensions = @("exe", "zip", "tar.gz", "pkg"),
-    [string]$OutputDirectory = ".\dotnet-download",
-    [string]$AzureFeed = "https://dotnetcli.azureedge.net/dotnet",
-    [string]$UncachedFeed = "https://dotnetcli.blob.core.windows.net/dotnet",
-    [string]$ProxyAddress,
-    [switch]$ProxyUseDefaultCredentials,
-    [switch]$NoCdn
+    [string[]]
+    $Channels = @("Current", "LTS", "3.1", "2.1"),
+
+    [string[]]
+    [ValidateSet("sdk", "dotnet", "aspnetcore", "hostingbundle", "windowsdesktop")]
+    $DotnetTypes = @("sdk", "dotnet", "aspnetcore", "hostingbundle", "windowsdesktop"),
+
+    [string[]]
+    [ValidateSet("win-x64", "win-x86", "win-arm", "win-arm64", "linux-x64", "linux-arm", "linux-arm64", "alpine-x64", "alpine-arm64", "rhel6-x64", "osx-x64")]
+    $Architectures = @("win-x64", "win-x86", "win-arm", "win-arm64", "linux-x64", "linux-arm", "linux-arm64", "alpine-x64", "alpine-arm64", "rhel6-x64", "osx-x64"),
+
+    [string[]]
+    $FileExtensions = @("exe", "zip", "tar.gz", "pkg"),
+
+    [string]
+    $OutputDirectory = ".\dotnet-download",
+
+    [string]
+    $AzureFeed = "https://dotnetcli.azureedge.net/dotnet",
+
+    [string]
+    $UncachedFeed = "https://dotnetcli.blob.core.windows.net/dotnet",
+
+    [string]
+    $ProxyAddress,
+
+    [switch]
+    $ProxyUseDefaultCredentials,
+
+    [switch]
+    $NoCdn
 )
 
 Set-StrictMode -Version Latest
