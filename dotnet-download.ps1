@@ -62,6 +62,7 @@
 [cmdletbinding()]
 param(
     [string[]]
+    [ValidatePattern("^Current|LTS|\d\.\d$")]
     $Channels = @("Current", "LTS", "3.1", "2.1"),
 
     [string[]]
@@ -73,6 +74,7 @@ param(
     $Architectures = @("win-x64", "win-x86", "win-arm", "win-arm64", "linux-x64", "linux-arm", "linux-arm64", "alpine-x64", "alpine-arm64", "rhel6-x64", "osx-x64"),
 
     [string[]]
+    [ValidateSet("exe", "zip", "tar.gz", "pkg")]
     $FileExtensions = @("exe", "zip", "tar.gz", "pkg"),
 
     [string]
@@ -99,7 +101,7 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
 if ($Channels.Count -lt 1) {
-    throw "At least one Channel should be selected."
+    throw "At least one Channel should be provided."
 }
 
 if ($DotnetTypes.Count -lt 1) {
@@ -110,8 +112,23 @@ if ($Architectures.Count -lt 1) {
     throw "At least one Architecture should be selected."
 }
 
+if ($FileExtensions.Count -lt 1) {
+    throw "At least one File Extension should be provided."
+}
+
+if (-not (Test-Path $OutputDirectory)) {
+    New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
+}
+
 if ($NoCdn) {
     $AzureFeed = $UncachedFeed
+}
+
+$Channels = [System.Collections.Generic.HashSet[string]]::new($Channels, [StringComparer]::InvariantCultureIgnoreCase)
+
+$DotnetChannelSanitized = @{
+    "lts"     = "LTS"
+    "current" = "Current"
 }
 
 $DotnetTypeToLink = @{
@@ -220,13 +237,10 @@ function Get-LatestVersion([string]$Channel, [string]$DotnetType) {
     $VersionFileUrl = if ($DotnetType -eq "sdk") {
         "$AzureFeed/Sdk/$Channel/latest.version"
     }
-    elseif (@("dotnet", "aspnetcore", "hostingbundle", "windowsdesktop") -contains $DotnetType) {
+    else {
         "$AzureFeed/Runtime/$Channel/latest.version"
         # There's also this path for aspnetcore and hostingbundle:
         # "$AzureFeed/aspnetcore/Runtime/$Channel/latest.version"
-    }
-    else {
-        throw "Invalid value for `$DotnetType"
     }
 
     try {
@@ -248,14 +262,6 @@ function Get-LatestVersion([string]$Channel, [string]$DotnetType) {
 
 function Get-DownloadInfo([string]$SpecificVersion, [string]$CLIArchitecture, [string]$DotnetType, [string]$FileExtension) {
     Say-Invocation $MyInvocation
-
-    if ($DotnetTypeToLink.PSBase.Keys -notcontains $DotnetType) {
-        throw "Invalid value for `$DotnetType"
-    }
-
-    if ($ArchitectureToFileName.PSBase.Keys -notcontains $CLIArchitecture) {
-        throw "Invalid value for `$CLIArchitecture"
-    }
 
     $FileNameFirstPart = $DotnetTypeToFileName[$DotnetType]
     $FileNameSecondPart = $ArchitectureToFileName[$CLIArchitecture]
@@ -285,7 +291,8 @@ function Get-ChannelVersion([string]$Channel) {
         return $Channel
     }
 
-    $Version = Get-LatestVersion -Channel $Channel -DotnetType $DotnetTypes[0]
+    $SanitizedChannel = $DotnetChannelSanitized[$Channel]
+    $Version = Get-LatestVersion -Channel $SanitizedChannel -DotnetType $DotnetTypes[0]
     if ($Version -match "(\d\.\d{1,2})") {
         return $Matches[0]
     }
