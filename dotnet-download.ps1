@@ -125,6 +125,9 @@ if ($NoCdn) {
 }
 
 $Channels = [System.Collections.Generic.HashSet[string]]::new($Channels, [StringComparer]::InvariantCultureIgnoreCase)
+$DotnetTypes = [System.Collections.Generic.HashSet[string]]::new($DotnetTypes, [StringComparer]::InvariantCultureIgnoreCase)
+$Architectures = [System.Collections.Generic.HashSet[string]]::new($Architectures, [StringComparer]::InvariantCultureIgnoreCase)
+$FileExtensions = [System.Collections.Generic.HashSet[string]]::new($FileExtensions, [StringComparer]::InvariantCultureIgnoreCase)
 
 $DotnetChannelSanitized = @{
     "lts"     = "LTS"
@@ -291,8 +294,7 @@ function Get-ChannelVersion([string]$Channel) {
         return $Channel
     }
 
-    $SanitizedChannel = $DotnetChannelSanitized[$Channel]
-    $Version = Get-LatestVersion -Channel $SanitizedChannel -DotnetType $DotnetTypes[0]
+    $Version = Get-LatestVersion -Channel $DotnetChannelSanitized[$Channel] -DotnetType $DotnetTypes[0]
     if ($Version -match "(\d\.\d{1,2})") {
         return $Matches[0]
     }
