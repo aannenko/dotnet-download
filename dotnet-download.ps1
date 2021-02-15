@@ -174,8 +174,8 @@ function Say-Verbose($str) {
 
 function Say-Invocation($Invocation) {
     $command = $Invocation.MyCommand;
-    $args = (($Invocation.BoundParameters.Keys | ForEach-Object { "-$_ `"$($Invocation.BoundParameters[$_])`"" }) -join " ")
-    Say-Verbose "$command $args"
+    $arguments = (($Invocation.BoundParameters.Keys | ForEach-Object { "-$_ `"$($Invocation.BoundParameters[$_])`"" }) -join " ")
+    Say-Verbose "$command $arguments"
 }
 
 function Invoke-WithRetry([ScriptBlock]$ScriptBlock, [int]$MaxAttempts = 3, [int]$MilliecondsBetweenAttempts = 300) {
@@ -294,7 +294,11 @@ function Get-ChannelVersion([string]$Channel) {
         return $Channel
     }
 
-    $Version = Get-LatestVersion -Channel $DotnetChannelSanitized[$Channel] -DotnetType $DotnetTypes[0]
+    if ($DotnetChannelSanitized.Contains($Channel)) {
+        $Channel = $DotnetChannelSanitized[$Channel]
+    }
+
+    $Version = Get-LatestVersion -Channel $Channel -DotnetType $DotnetTypes[0]
     if ($Version -match "(\d\.\d{1,2})") {
         return $Matches[0]
     }
