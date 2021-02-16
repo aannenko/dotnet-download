@@ -9,14 +9,13 @@
     Downloads latest dotnet binaries of the specified architectures from the specified channels.
     If dotnet files already exist in the given directory their download will be skipped.
 .PARAMETER Channels
+    Array or Channels to download from.
+    Possible values:
+        - Current   - most current release
+        - LTS       - most current Long Term Service release
+        - 2-part version in a format A.B - represents a specific release; examples: 3.1, 5.0
     Default: Current, LTS, 3.1, 2.1
-    Array or Channels to download from. Possible values:
-    - Current   - most current release
-    - LTS       - most current Long Term Service release
-    - 2-part version in a format A.B - represents a specific release
-          examples: 3.1, 5.0
 .PARAMETER DotnetTypes
-    Default: sdk, dotnet, aspnetcore, hostingbundle, windowsdesktop
     Array of dotnet binaries' types to download.
     Possible values:
         - sdk            - SDK
@@ -24,39 +23,48 @@
         - aspnetcore     - the Microsoft.AspNetCore.App shared runtime
         - hostingbundle  - the Hosting Bundle, which includes the .NET Core Runtime and IIS support
         - windowsdesktop - the Microsoft.WindowsDesktop.App shared runtime
+    Default: sdk, dotnet, aspnetcore, hostingbundle, windowsdesktop
 .PARAMETER Architectures
-    Default: win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64
     Array or dotnet binaries' architectures to download.
-    Possible values are: win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64
+    Possible values: win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64
+    Default: win-x64, win-x86, win-arm, win-arm64, linux-x64, linux-arm, linux-arm64, alpine-x64, alpine-arm64, rhel6-x64, osx-x64
 .PARAMETER FileExtensions
-    Default: exe, zip, tar.gz, pkg
     Array of dotnet binaries' file extensions to download.
     Possible values:
         - exe       - Windows installer
         - zip       - zip archive with dotnet binaries
         - tar.gz    - tar.gz archive with dotnet binaries
         - pkg       - OSX installer
+    Default: exe, zip, tar.gz, pkg
 .PARAMETER OutputDirectory
-    Default: .\dotnet-download
     Specifies a directory to download dotnet binaries into.
+    Default: .\dotnet-download
 .PARAMETER AzureFeed
+    This parameter typically is not changed by the user.
+    It allows changing the URL for primary feed used by this script.
     Default: https://dotnetcli.azureedge.net/dotnet
-    This parameter typically is not changed by the user.
-    It allows changing the URL for primary feed used by this downloader script.
 .PARAMETER UncachedFeed
-    Default: https://dotnetcli.blob.core.windows.net/dotnet
     This parameter typically is not changed by the user.
-    It allows changing the URL for the Uncached feed used by this downloader script.
+    It allows changing the URL for the Uncached feed used by this script.
+    Default: https://dotnetcli.blob.core.windows.net/dotnet
 .PARAMETER ProxyAddress
-    If set, this downloader script will use the proxy when making web requests.
+    If set, this script will use the proxy when making web requests.
 .PARAMETER ProxyUseDefaultCredentials
-    Default: false
     Use default credentials, when using proxy address.
 .PARAMETER NoCdn
     Disable downloading from the Azure CDN, and use the uncached feed directly.
 .PARAMETER Verbose
-    Default: false
     Show verbose output for script's actions.
+.EXAMPLE
+    PS> .\dotnet-download.ps1
+
+    Download latest versions of all binaries, of all supported .NET versions and architectures, and put them in the .\dotnet-download directory.
+.EXAMPLE
+    PS> .\dotnet-download.ps1 -Channels LTS, Current, 2.2 -DotnetTypes sdk, hostingbundle -Architectures win-x64 -FileExtensions exe -OutputDirectory C:\dotnet -NoCdn
+
+    Download latest Windows x64 SDK and hosting bundle installers from the Current, LTS and 2.2 channels bypassing Azure CDN, and put them in the C:\dotnet directory.
+.NOTES
+    https://github.com/aannenko/dotnet-download
 #>
 
 [cmdletbinding()]
@@ -151,25 +159,17 @@ $DotnetTypeToFileName = @{
 }
 
 $ArchitectureToFileName = @{
-    "win-x86"      = "win-x86"
-    "win-x64"      = "win-x64"
-    "win-arm"      = "win-arm"
-    "win-arm64"    = "win-arm64"
-    "linux-x64"    = "linux-x64"
-    "linux-arm"    = "linux-arm"
-    "linux-arm64"  = "linux-arm64"
     "alpine-x64"   = "linux-musl-x64"
     "alpine-arm64" = "linux-musl-arm64"
     "rhel6-x64"    = "rhel.6-x64"
-    "osx-x64"      = "osx-x64"
 }
 
 function Say($str) {
-    Write-Host "dotnet-download: $str"
+    Write-Host "[$(Get-Date -Format o)] dotnet-download: $str"
 }
 
 function Say-Verbose($str) {
-    Write-Verbose "dotnet-download: $str"
+    Write-Verbose "[$(Get-Date -Format o)] dotnet-download: $str"
 }
 
 function Say-Invocation($Invocation) {
@@ -267,12 +267,17 @@ function Get-DownloadInfo([string]$SpecificVersion, [string]$CLIArchitecture, [s
     Say-Invocation $MyInvocation
 
     $FileNameFirstPart = $DotnetTypeToFileName[$DotnetType]
-    $FileNameSecondPart = $ArchitectureToFileName[$CLIArchitecture]
-
     $FileName = if ($DotnetType -eq "hostingbundle") {
         "$FileNameFirstPart-$SpecificVersion-win.exe"
     }
     else {
+        $FileNameSecondPart = if ($ArchitectureToFileName[$CLIArchitecture]) {
+            $ArchitectureToFileName[$CLIArchitecture]
+        }
+        else {
+            $CLIArchitecture
+        }
+        
         "$FileNameFirstPart-$SpecificVersion-$FileNameSecondPart.$FileExtension"
     }
 
