@@ -57,11 +57,9 @@
     Show verbose output for script's actions.
 .EXAMPLE
     PS> .\dotnet-download.ps1
-
     Download latest versions of all binaries, of all supported .NET versions and architectures, and put them in the .\dotnet-download directory.
 .EXAMPLE
     PS> .\dotnet-download.ps1 -Channels LTS, Current, 2.2 -DotnetTypes sdk, hostingbundle -Architectures win-x64 -FileExtensions exe -OutputDirectory C:\dotnet -NoCdn
-
     Download latest Windows x64 SDK and hosting bundle installers from the Current, LTS and 2.2 channels bypassing Azure CDN, and put them in the C:\dotnet directory.
 .NOTES
     https://github.com/aannenko/dotnet-download
@@ -132,10 +130,10 @@ if ($NoCdn) {
     $AzureFeed = $UncachedFeed
 }
 
-$Channels = [System.Collections.Generic.HashSet[string]]::new($Channels, [StringComparer]::InvariantCultureIgnoreCase)
-$DotnetTypes = [System.Collections.Generic.HashSet[string]]::new($DotnetTypes, [StringComparer]::InvariantCultureIgnoreCase)
-$Architectures = [System.Collections.Generic.HashSet[string]]::new($Architectures, [StringComparer]::InvariantCultureIgnoreCase)
-$FileExtensions = [System.Collections.Generic.HashSet[string]]::new($FileExtensions, [StringComparer]::InvariantCultureIgnoreCase)
+$Channels = [System.Collections.Generic.HashSet[string]]::new($Channels, [StringComparer]::OrdinalIgnoreCase)
+$DotnetTypes = [System.Collections.Generic.HashSet[string]]::new($DotnetTypes, [StringComparer]::OrdinalIgnoreCase)
+$Architectures = [System.Collections.Generic.HashSet[string]]::new($Architectures, [StringComparer]::OrdinalIgnoreCase)
+$FileExtensions = [System.Collections.Generic.HashSet[string]]::new($FileExtensions, [StringComparer]::OrdinalIgnoreCase)
 
 $DotnetChannelSanitized = @{
     "lts"     = "LTS"
